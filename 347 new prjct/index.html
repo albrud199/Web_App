@@ -1,3 +1,7 @@
+
+
+<!--Grok-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +10,10 @@
   <title>Flat Finder Dhaka - Find Your Perfect Home</title>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Firebase SDK (v9+ compat mode) -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 </head>
 <body>
   <!-- Header -->
@@ -22,11 +30,29 @@
           <li><a href="#tools">Tools</a></li>
           <li><a href="#about">About</a></li>
           <li><a href="#contact">Contact</a></li>
-          <li><a href="#" class="btn">Sign In</a></li>
+          <li><a href="#" id="authButton" class="btn">Sign In</a></li>
         </ul>
       </div>
     </div>
   </header>
+
+  <!-- ==================== AUTH MODAL ==================== -->
+  <div id="authModal" class="modal">
+    <div class="modal-content">
+      <span class="close">×</span>
+      <h2 id="modalTitle">Sign In</h2>
+      <div class="auth-toggle">
+        <button id="showLogin" class="active">Login</button>
+        <button id="showSignup">Sign Up</button>
+      </div>
+      <form id="authForm">
+        <input type="email" id="authEmail" placeholder="Email" required>
+        <input type="password" id="authPassword" placeholder="Password (min. 6 characters)" required>
+        <button type="submit" class="btn" id="authSubmit">Sign In</button>
+        <p id="authMessage" style="color:red; margin-top:10px; min-height:24px;"></p>
+      </form>
+    </div>
+  </div>
 
   <!-- Hero Section -->
   <section class="hero" id="home">
@@ -97,9 +123,7 @@
         <button class="filter-btn" data-filter="commercial">Commercial</button>
         <button class="filter-btn" data-filter="plot">Plots</button>
       </div>
-
       <div id="searchResults" class="search-results-message"></div>
-
       <div class="properties-grid">
         <!-- Property 1 - Apartment -->
         <div class="property-card apartment" data-area="gulshan" data-price="250">
@@ -118,7 +142,6 @@
             <a href="#" class="btn btn-outline">View Details</a>
           </div>
         </div>
-
         <!-- Property 2 - House -->
         <div class="property-card house" data-area="dhanmondi" data-price="120">
           <div class="property-img">
@@ -136,7 +159,6 @@
             <a href="#" class="btn btn-outline">View Details</a>
           </div>
         </div>
-
         <!-- Property 3 - Commercial -->
         <div class="property-card commercial" data-area="banani" data-price="350">
           <div class="property-img">
@@ -153,7 +175,6 @@
             <a href="#" class="btn btn-outline">View Details</a>
           </div>
         </div>
-
         <!-- Property 4 - Apartment -->
         <div class="property-card apartment" data-area="uttara" data-price="85">
           <div class="property-img">
@@ -171,7 +192,6 @@
             <a href="#" class="btn btn-outline">View Details</a>
           </div>
         </div>
-
         <!-- Property 5 - House -->
         <div class="property-card house" data-area="mirpur" data-price="180">
           <div class="property-img">
@@ -189,7 +209,6 @@
             <a href="#" class="btn btn-outline">View Details</a>
           </div>
         </div>
-
         <!-- Property 6 - Plot -->
         <div class="property-card plot" data-area="purbachal" data-price="320">
           <div class="property-img">
@@ -206,7 +225,6 @@
           </div>
         </div>
       </div>
-
       <div style="text-align: center; margin-top: 40px;">
         <a href="#" class="btn">View All Properties</a>
       </div>
@@ -248,56 +266,53 @@
     </div>
   </section>
 
-
   <!-- About Section -->
-<section class="about" id="about">
-  <div class="container">
-    <div class="section-title">
-      <h2>About Us</h2>
-      <p>Your trusted property partner in Bangladesh's capital</p>
-    </div>
-    <div class="about-content">
-      <div class="about-text">
-        <h3>Who We Are</h3>
-        <p>FlatFinder Dhaka is a premier real estate platform dedicated to simplifying property search and transactions in Dhaka. Founded with the vision of making property hunting transparent and efficient, we have helped thousands of families find their dream homes and investors discover profitable opportunities.</p>
-        
-        <h3>Our Mission</h3>
-        <p>We strive to revolutionize the real estate experience in Dhaka by providing accurate property listings, transparent pricing, and comprehensive tools that empower buyers and sellers to make informed decisions. Our commitment is to build trust and deliver exceptional service at every step of your property journey.</p>
-        
-        <h3>Why Choose Us</h3>
-        <ul class="about-list">
-          <li><i class="fas fa-check-circle"></i> <strong>Verified Listings:</strong> Every property is thoroughly vetted for authenticity</li>
-          <li><i class="fas fa-check-circle"></i> <strong>Expert Guidance:</strong> Professional support throughout your property search</li>
-          <li><i class="fas fa-check-circle"></i> <strong>Advanced Tools:</strong> EMI calculators and price analytics at your fingertips</li>
-          <li><i class="fas fa-check-circle"></i> <strong>Prime Locations:</strong> Exclusive access to properties in sought-after neighborhoods</li>
-          <li><i class="fas fa-check-circle"></i> <strong>Transparent Process:</strong> No hidden fees or surprise charges</li>
-        </ul>
+  <section class="about" id="about">
+    <div class="container">
+      <div class="section-title">
+        <h2>About Us</h2>
+        <p>Your trusted property partner in Bangladesh's capital</p>
       </div>
-      <div class="about-stats">
-        <div class="stat-card">
-          <i class="fas fa-home"></i>
-          <div class="stat-number">5000+</div>
-          <div class="stat-label">Properties Listed</div>
+      <div class="about-content">
+        <div class="about-text">
+          <h3>Who We Are</h3>
+          <p>FlatFinder Dhaka is a premier real estate platform dedicated to simplifying property search and transactions in Dhaka. Founded with the vision of making property hunting transparent and efficient, we have helped thousands of families find their dream homes and investors discover profitable opportunities.</p>
+          <h3>Our Mission</h3>
+          <p>We strive to revolutionize the real estate experience in Dhaka by providing accurate property listings, transparent pricing, and comprehensive tools that empower buyers and sellers to make informed decisions. Our commitment is to build trust and deliver exceptional service at every step of your property journey.</p>
+          <h3>Why Choose Us</h3>
+          <ul class="about-list">
+            <li><i class="fas fa-check-circle"></i> <strong>Verified Listings:</strong> Every property is thoroughly vetted for authenticity</li>
+            <li><i class="fas fa-check-circle"></i> <strong>Expert Guidance:</strong> Professional support throughout your property search</li>
+            <li><i class="fas fa-check-circle"></i> <strong>Advanced Tools:</strong> EMI calculators and price analytics at your fingertips</li>
+            <li><i class="fas fa-check-circle"></i> <strong>Prime Locations:</strong> Exclusive access to properties in sought-after neighborhoods</li>
+            <li><i class="fas fa-check-circle"></i> <strong>Transparent Process:</strong> No hidden fees or surprise charges</li>
+          </ul>
         </div>
-        <div class="stat-card">
-          <i class="fas fa-users"></i>
-          <div class="stat-number">3000+</div>
-          <div class="stat-label">Happy Clients</div>
-        </div>
-        <div class="stat-card">
-          <i class="fas fa-handshake"></i>
-          <div class="stat-number">2500+</div>
-          <div class="stat-label">Successful Deals</div>
-        </div>
-        <div class="stat-card">
-          <i class="fas fa-award"></i>
-          <div class="stat-number">8+</div>
-          <div class="stat-label">Years Experience</div>
+        <div class="about-stats">
+          <div class="stat-card">
+            <i class="fas fa-home"></i>
+            <div class="stat-number">5000+</div>
+            <div class="stat-label">Properties Listed</div>
+          </div>
+          <div class="stat-card">
+            <i class="fas fa-users"></i>
+            <div class="stat-number">3000+</div>
+            <div class="stat-label">Happy Clients</div>
+          </div>
+          <div class="stat-card">
+            <i class="fas fa-handshake"></i>
+            <div class="stat-number">2500+</div>
+            <div class="stat-label">Successful Deals</div>
+          </div>
+          <div class="stat-card">
+            <i class="fas fa-award"></i>
+            <div class="stat-number">8+</div>
+            <div class="stat-label">Years Experience</div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
   <!-- Testimonials -->
   <section class="testimonials">
@@ -374,7 +389,7 @@
             <li><a href="#properties">Properties</a></li>
             <li><a href="#tools">Tools</a></li>
             <li><a href="#">Blog</a></li>
-            <li><a href="#">About Us</a></li>
+            <li><a href="#about">About Us</a></li>
           </ul>
         </div>
         <div class="footer-column">
@@ -397,11 +412,13 @@
         </div>
       </div>
       <div class="footer-bottom">
-        <p>&copy; 2025 FlatFinder Dhaka. All rights reserved.</p>
+        <p>© 2025 FlatFinder Dhaka. All rights reserved.</p>
       </div>
     </div>
   </footer>
 
+  <!-- Your style.css + modal styles are in style.css -->
+  <!-- Your script.js (with Firebase + original code) is in script.js -->
   <script src="script.js"></script>
 </body>
 </html>
