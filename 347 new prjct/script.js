@@ -240,3 +240,97 @@ function calculatePSF() {
 
   document.getElementById('psfResult').textContent = `Price per Sq.Ft: ৳${(price / area).toFixed(2)}`;
 }
+
+// Transparent header scroll effect
+window.addEventListener('scroll', function() {
+  const header = document.querySelector('header');
+  
+  if (window.scrollY > 50) {
+    header.classList.add('scrolled');
+  } else {
+    header.classList.remove('scrolled');
+  }
+});
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Configuration
+  const itemsPerPage = 3;
+  const cards = document.querySelectorAll('.property-card');
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const paginationContainer = document.getElementById('pagination');
+  
+  let currentPage = 1;
+  let currentFilter = 'all';
+
+  // Initial Load
+  render();
+
+  // Handle Filter Clicks
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Remove active class from all buttons
+      filterBtns.forEach(b => b.classList.remove('active'));
+      // Add active class to clicked button
+      btn.classList.add('active');
+      
+      // Update state
+      currentFilter = btn.getAttribute('data-filter');
+      currentPage = 1; // Reset to page 1 when filtering
+      
+      render();
+    });
+  });
+
+  function render() {
+    // 1. Filter the cards based on current category
+    const visibleCards = [];
+    cards.forEach(card => {
+      if (currentFilter === 'all' || card.classList.contains(currentFilter)) {
+        visibleCards.push(card);
+      } else {
+        card.classList.add('hidden'); // Hide immediately if not in filter
+      }
+    });
+
+    // 2. Calculate pagination limits
+    const totalPages = Math.ceil(visibleCards.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+
+    // 3. Show/Hide cards based on pagination
+    visibleCards.forEach((card, index) => {
+      if (index >= startIndex && index < endIndex) {
+        card.classList.remove('hidden');
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+
+    // 4. Generate Pagination Buttons
+    paginationContainer.innerHTML = '';
+    
+    // Only show pagination if we have more items than the limit
+    if (totalPages > 1) {
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.classList.add('page-btn');
+        if (i === currentPage) btn.classList.add('active');
+        btn.innerText = i;
+        
+        btn.addEventListener('click', () => {
+          currentPage = i;
+          render();
+          // Optional: Scroll back to top of properties section
+          const propertiesSection = document.querySelector('#properties');
+          if(propertiesSection) {
+            propertiesSection.scrollIntoView({ behavior: 'smooth' });
+          }
+        });
+        
+        paginationContainer.appendChild(btn);
+      }
+    }
+  }
+});
+
