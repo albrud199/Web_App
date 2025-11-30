@@ -1,4 +1,16 @@
-// ==================== FIREBASE INITIALIZATION ====================
+// ==================== FIREBASE v9 INITIALIZATION ====================
+import { 
+  initializeApp 
+} from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+
+import { 
+  getAuth, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+
 const firebaseConfig = {
   apiKey: "AIzaSyC0DRpfgfbUcLGdKewLqiCuWcgZ6-Trdpg",
   authDomain: "homey-147.firebaseapp.com",
@@ -9,8 +21,9 @@ const firebaseConfig = {
   measurementId: "G-R2BMZDKRJJ"
 };
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
 // ==================== AUTH MODAL LOGIC ====================
 const authModal = document.getElementById('authModal');
@@ -28,6 +41,10 @@ let isLoginMode = true;
 // Open modal
 authButton.addEventListener('click', (e) => {
   e.preventDefault();
+  if (authButton.textContent === 'Logout') {
+    signOut(auth);
+    return;
+  }
   authModal.style.display = 'flex';
 });
 
@@ -68,14 +85,14 @@ authForm.onsubmit = (e) => {
   authMessage.textContent = 'Please wait...';
 
   if (isLoginMode) {
-    auth.signInWithEmailAndPassword(email, password)
+    signInWithEmailAndPassword(auth, email, password)
       .then(() => {
         authModal.style.display = 'none';
         authMessage.textContent = '';
       })
       .catch(err => authMessage.textContent = err.message);
   } else {
-    auth.createUserWithEmailAndPassword(email, password)
+    createUserWithEmailAndPassword(auth, email, password)
       .then(() => {
         authModal.style.display = 'none';
         authMessage.textContent = '';
@@ -85,13 +102,14 @@ authForm.onsubmit = (e) => {
 };
 
 // Update navbar button (Sign In to Logout)
-auth.onAuthStateChanged(user => {
+onAuthStateChanged(auth, (user) => {
   if (user) {
     authButton.textContent = 'Logout';
   } else {
     authButton.textContent = 'Sign In';
   }
 });
+
 
 // Re-attach correct behavior after login/logout
 authButton.addEventListener('click', function(e) {
