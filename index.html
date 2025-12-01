@@ -368,33 +368,48 @@
   </div>
 
   <!-- Hero Section -->
-  <section class="hero" id="home">
-    <div class="container">
-      <div class="hero-content">
-        <h1>Find Your Perfect Flat in Dhaka</h1>
-        <p>Discover the best apartments, plots, and commercial spaces across the city with our advanced search tools.</p>
-        <div class="search-box">
-          <input type="text" id="searchArea" placeholder="Enter area, location or property name">
-          <select id="propertyTypeSearch">
-            <option value="">Property Type</option>
-            <option value="apartment">Flat/Apartment</option>
-            <option value="house">House</option>
-            <option value="plot">Plot/Land</option>
-            <option value="commercial">Commercial</option>
-          </select>
-          <select id="priceRange">
-            <option value="">Price Range</option>
-            <option value="0-50">Up to 50 Lakh</option>
-            <option value="50-100">50 Lakh - 1 Crore</option>
-            <option value="100-200">1 - 2 Crore</option>
-            <option value="200+">Above 2 Crore</option>
-          </select>
-          <button class="btn" id="searchBtn">Search</button>
-        </div>
+<section class="hero" id="home">
+  <div class="container">
+    <div class="hero-content">
+      <h1>Find Your Perfect Flat in Dhaka</h1>
+      <p>Discover the best apartments, plots, and commercial spaces across the city with our advanced search tools.</p>
+      <div class="search-box">
+        <!-- Changed from <input type="text"> to <select> -->
+        <select id="searchArea">
+          <option value="">Select Area</option>
+          <option value="Gulshan">Gulshan</option>
+          <option value="Banani">Banani</option>
+          <option value="Dhanmondi">Dhanmondi</option>
+          <option value="Uttara">Uttara</option>
+          <option value="Mirpur">Mirpur</option>
+          <option value="Bashundhara">Bashundhara</option>
+          <option value="Mohammadpur">Mohammadpur</option>
+          <option value="Motijheel">Motijheel</option>
+          <option value="Tejgaon">Tejgaon</option>
+          <option value="Other">Other</option>
+        </select>
+
+        <select id="propertyTypeSearch">
+          <option value="">Property Type</option>
+          <option value="apartment">Flat/Apartment</option>
+          <option value="house">House</option>
+          <option value="plot">Plot/Land</option>
+          <option value="commercial">Commercial</option>
+        </select>
+
+        <select id="priceRange">
+          <option value="">Price Range</option>
+          <option value="0-50">Up to 50 Lakh</option>
+          <option value="50-100">50 Lakh - 1 Crore</option>
+          <option value="100-200">1 - 2 Crore</option>
+          <option value="200+">Above 2 Crore</option>
+        </select>
+
+        <button class="btn" id="searchBtn">Search</button>
       </div>
     </div>
-  </section>
-
+  </div>
+</section>
   <!-- Features Section -->
   <section class="features">
     <div class="container">
