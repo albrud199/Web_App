@@ -28,6 +28,8 @@
           <li id="dashboardLink" style="display:none;"><a href="#" id="openDashboard" class="btn btn-outline">Dashboard</a></li>
           <li id="sellPropertyLink" style="display:none;"><a href="#" id="openSellProperty" class="btn btn-success">Sell Property</a></li>
           <li><a href="#" id="authButton" class="btn">Sign In</a></li>
+          <!-- Admin link (visible only for admin user) -->
+           <li id = "adminLink" style ="display: none;"><button id ="openAdminPanel" class = "btn btn-outline" type = "button">Admin Panel ></button></li>
         </ul>
       </div>
     </div>
@@ -200,6 +202,87 @@
       </div>
     </div>
   </div>
+
+    <!-- ==================== ADMIN PANEL MODAL ==================== -->
+  <div id="adminModal" class="modal">
+    <div class="modal-content admin-modal-content">
+      <span class="close" id="closeAdminPanel">&times;</span>
+
+      <div class="admin-container">
+        <div class="admin-sidebar">
+          <div class="admin-profile">
+            <h3>Admin Panel</h3>
+            <p id="adminEmailDisplay">admin@admin.com</p>
+          </div>
+
+          <nav class="admin-nav">
+            <button class="admin-nav-btn active" data-tab="admin-overview">
+              <i class="fas fa-th-large"></i> Overview
+            </button>
+            <button class="admin-nav-btn" data-tab="admin-properties">
+              <i class="fas fa-home"></i> Properties
+            </button>
+            <button class="admin-nav-btn" data-tab="admin-users">
+              <i class="fas fa-users"></i> Users
+            </button>
+            <button class="admin-nav-btn" data-tab="admin-inquiries">
+              <i class="fas fa-envelope-open"></i> Inquiries
+            </button>
+          </nav>
+        </div>
+
+        <div class="admin-content">
+          <!-- Overview -->
+          <section id="tab-admin-overview" class="admin-tab active">
+            <h2>Admin Overview</h2>
+            <div class="admin-stats-grid">
+              <div class="admin-stat-box">
+                <span class="admin-stat-label">Total Properties</span>
+                <span class="admin-stat-value" id="adminTotalProperties">0</span>
+              </div>
+              <div class="admin-stat-box">
+                <span class="admin-stat-label">Total Users</span>
+                <span class="admin-stat-value" id="adminTotalUsers">0</span>
+              </div>
+              <div class="admin-stat-box">
+                <span class="admin-stat-label">Total Inquiries</span>
+                <span class="admin-stat-value" id="adminTotalInquiries">0</span>
+              </div>
+              <div class="admin-stat-box">
+                <span class="admin-stat-label">Sold Properties</span>
+                <span class="admin-stat-value" id="adminSoldProperties">0</span>
+              </div>
+            </div>
+            <p class="tab-description">
+              Use the menu on the left to manage properties, users and inquiries.
+            </p>
+          </section>
+
+          <!-- Properties -->
+          <section id="tab-admin-properties" class="admin-tab">
+            <h2>All Properties</h2>
+            <p class="tab-description">View and manage all property listings.</p>
+            <div id="adminPropertiesList"></div>
+          </section>
+
+          <!-- Users -->
+          <section id="tab-admin-users" class="admin-tab">
+            <h2>All Users</h2>
+            <p class="tab-description">List of all registered users.</p>
+            <div id="adminUsersList"></div>
+          </section>
+
+          <!-- Inquiries -->
+          <section id="tab-admin-inquiries" class="admin-tab">
+            <h2>All Inquiries</h2>
+            <p class="tab-description">View and manage all inquiries.</p>
+            <div id="adminInquiriesList"></div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
   <!-- ==================== SELL/ADD PROPERTY MODAL ==================== -->
   <div id="sellPropertyModal" class="modal">

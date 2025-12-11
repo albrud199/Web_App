@@ -50,6 +50,8 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 // ==================== GLOBAL VARIABLES ====================
+const ADMIN_EMAIL = 'admin@admin.com';  // <-- add this
+
 let currentUser = null;
 let allProperties = [];
 let userProperties = [];
@@ -62,6 +64,10 @@ const itemsPerPage = 6;
 let currentProperty = null;
 let editingPropertyId = null;
 let selectedImages = [];
+
+// NEW admin globals
+let allUsers = [];
+let allInquiries = [];
 
 // ==================== DOM ELEMENTS ====================
 // Auth Elements
@@ -76,6 +82,11 @@ const authSubmit = document.getElementById('authSubmit');
 const authMessage = document.getElementById('authMessage');
 const signupNameField = document.getElementById('signupNameField');
 const signupPhoneField = document.getElementById('signupPhoneField');
+// Admin Panel Elements
+const adminModal = document.getElementById('adminModal');
+const adminLink = document.getElementById('adminLink');
+const openAdminPanelBtn = document.getElementById('openAdminPanel');
+const closeAdminPanel = document.getElementById('closeAdminPanel');
 
 // Dashboard Elements
 const dashboardModal = document.getElementById('dashboardModal');
@@ -163,6 +174,7 @@ function closeAllModals() {
   sellPropertyModal.style.display = 'none';
   propertyModal.style.display = 'none';
   inquiryModal.style.display = 'none';
+  if (adminModal) adminModal.style.display = 'none';
   document.body.style.overflow = 'auto';
 }
 
@@ -256,32 +268,42 @@ function setupAuthModal() {
   });
   
   // Auth state listener
-  onAuthStateChanged(auth, async (user) => {
-    currentUser = user;
-    
-    if (user) {
-      authButton.textContent = 'Logout';
-      dashboardLink.style.display = 'block';
-      sellPropertyLink.style.display = 'block';
-      
-      // Load user data
-      await loadUserData();
-      
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+  
+  if (user) {
+    authButton.textContent = 'Logout';
+    dashboardLink.style.display = 'block';
+    sellPropertyLink.style.display = 'block';
+
+    // Show admin link only for admin email
+    if (user.email === ADMIN_EMAIL) {
+      adminLink.style.display = 'block';
     } else {
-      authButton.textContent = 'Sign In';
-      dashboardLink.style.display = 'none';
-      sellPropertyLink.style.display = 'none';
-      userProperties = [];
-      userFavorites = [];
-      userInquiries = [];
-      receivedInquiries = [];
+      adminLink.style.display = 'none';
+      if (adminModal) adminModal.style.display = 'none';
     }
-    
-    // Refresh properties to update favorite buttons
-    if (allProperties.length > 0) {
-      renderProperties(getFilteredProperties());
-    }
-  });
+
+    // Load user data
+    await loadUserData();
+
+  } else {
+    authButton.textContent = 'Sign In';
+    dashboardLink.style.display = 'none';
+    sellPropertyLink.style.display = 'none';
+    adminLink.style.display = 'none';
+    userProperties = [];
+    userFavorites = [];
+    userInquiries = [];
+    receivedInquiries = [];
+    if (adminModal) adminModal.style.display = 'none';
+  }
+
+  // Refresh properties to update favorite buttons
+  if (allProperties.length > 0) {
+    renderProperties(getFilteredProperties());
+  }
+});
 }
 
 function resetAuthForm() {
@@ -677,6 +699,220 @@ async function updateUserProfile() {
     profileMessage.textContent = error.message;
     profileMessage.style.color = 'var(--danger)';
   }
+}
+
+// ==================== ADMIN PANEL FUNCTIONS ====================
+function setupAdminPanel() {
+  if (!adminModal || !openAdminPanelBtn) return;
+
+  // Open admin panel
+  openAdminPanelBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    if (!currentUser || currentUser.email !== ADMIN_EMAIL) {
+      showToast('Access denied: admin only', 'error');
+      return;
+    }
+    await openAdminModal();
+  });
+
+  // Close admin panel
+  closeAdminPanel.addEventListener('click', () => {
+    adminModal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+  });
+
+  // Admin nav tabs
+  document.querySelectorAll('.admin-nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+
+      document.querySelectorAll('.admin-nav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(`tab-${tab}`).classList.add('active');
+
+      loadAdminTab(tab);
+    });
+  });
+}
+
+async function openAdminModal() {
+  document.getElementById('adminEmailDisplay').textContent = currentUser.email || ADMIN_EMAIL;
+
+  await loadAdminData();
+
+  // Default to overview tab
+  document.querySelectorAll('.admin-nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.admin-nav-btn[data-tab="admin-overview"]').classList.add('active');
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-admin-overview').classList.add('active');
+
+  loadAdminTab('admin-overview');
+
+  adminModal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+async function loadAdminData() {
+  try {
+    // allProperties is already maintained by loadProperties()
+    // Load all users
+    const usersSnapshot = await getDocs(collection(db, 'users'));
+    allUsers = usersSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // Load all inquiries
+    const inquiriesSnapshot = await getDocs(collection(db, 'inquiries'));
+    allInquiries = inquiriesSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (error) {
+    console.error('Error loading admin data:', error);
+    showToast('Failed to load admin data', 'error');
+  }
+}
+
+function loadAdminTab(tab) {
+  switch (tab) {
+    case 'admin-overview':
+      loadAdminOverviewTab();
+      break;
+    case 'admin-properties':
+      loadAdminPropertiesTab();
+      break;
+    case 'admin-users':
+      loadAdminUsersTab();
+      break;
+    case 'admin-inquiries':
+      loadAdminInquiriesTab();
+      break;
+  }
+}
+
+function loadAdminOverviewTab() {
+  document.getElementById('adminTotalProperties').textContent = allProperties.length;
+  document.getElementById('adminTotalUsers').textContent = allUsers.length;
+  document.getElementById('adminTotalInquiries').textContent = allInquiries.length;
+
+  const soldCount = allProperties.filter(p => p.status === 'sold').length;
+  document.getElementById('adminSoldProperties').textContent = soldCount;
+}
+
+function loadAdminPropertiesTab() {
+  const container = document.getElementById('adminPropertiesList');
+
+  if (allProperties.length === 0) {
+    container.innerHTML = '<p class="no-data">No properties found.</p>';
+    return;
+  }
+
+  container.innerHTML = allProperties.map(prop => {
+    const owner = allUsers.find(u => u.uid === prop.createdBy);
+    const ownerEmail = owner?.email || 'Unknown';
+
+    const status = prop.status || 'available';
+    const toggleStatus = status === 'sold' ? 'available' : 'sold';
+
+    return `
+      <div class="admin-item-card">
+        <div class="admin-item-main">
+          <div>
+            <h4>${prop.title}</h4>
+            <p class="admin-item-sub">${formatPrice(prop.price)} • ${prop.location} • ${prop.type}</p>
+            <p class="admin-item-sub">Owner: ${ownerEmail}</p>
+          </div>
+          <div class="admin-status">
+            <span class="admin-status-badge ${status === 'sold' ? 'sold' : 'available'}">
+              ${status}
+            </span>
+          </div>
+        </div>
+        <div class="admin-item-actions">
+          <button class="btn btn-small" onclick="viewPropertyDetails('${prop.id}')">View</button>
+          <button class="btn btn-small btn-outline" onclick="adminChangePropertyStatus('${prop.id}', '${toggleStatus}')">
+            Mark as ${toggleStatus.charAt(0).toUpperCase() + toggleStatus.slice(1)}
+          </button>
+          <button class="btn btn-small btn-danger" onclick="adminDeleteProperty('${prop.id}')">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function loadAdminUsersTab() {
+  const container = document.getElementById('adminUsersList');
+
+  if (allUsers.length === 0) {
+    container.innerHTML = '<p class="no-data">No users found.</p>';
+    return;
+  }
+
+  container.innerHTML = allUsers.map(user => {
+    const propCount = allProperties.filter(p => p.createdBy === user.uid).length;
+    const inquiryCount = allInquiries.filter(i => i.fromUserId === user.uid).length;
+
+    return `
+      <div class="admin-item-card">
+        <div class="admin-item-main">
+          <div>
+            <h4>${user.name || user.email}</h4>
+            <p class="admin-item-sub">${user.email}</p>
+            <p class="admin-item-sub">Phone: ${user.phone || 'N/A'}</p>
+          </div>
+          <div class="admin-stats-mini">
+            <span>${propCount} properties</span>
+            <span>${inquiryCount} inquiries</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function loadAdminInquiriesTab() {
+  const container = document.getElementById('adminInquiriesList');
+
+  if (allInquiries.length === 0) {
+    container.innerHTML = '<p class="no-data">No inquiries found.</p>';
+    return;
+  }
+
+  const sorted = [...allInquiries].sort((a, b) => {
+    const aTime = a.createdAt?.seconds || 0;
+    const bTime = b.createdAt?.seconds || 0;
+    return bTime - aTime; // latest first
+  });
+
+  container.innerHTML = sorted.map(inq => {
+    const status = inq.status || 'pending';
+    const toggleStatus = status === 'responded' ? 'pending' : 'responded';
+
+    return `
+      <div class="admin-item-card">
+        <div class="admin-item-main">
+          <div>
+            <h4>${inq.propertyTitle || 'Property'}</h4>
+            <p class="admin-item-sub">
+              From: ${inq.fromName} (${inq.fromEmail}) • Phone: ${inq.fromPhone || 'N/A'}
+            </p>
+            <p class="admin-item-sub">
+              Message: ${inq.message.substring(0, 120)}${inq.message.length > 120 ? '…' : ''}
+            </p>
+            <p class="admin-item-sub">${formatDate(inq.createdAt)}</p>
+          </div>
+          <div class="admin-status">
+            <span class="admin-status-badge ${status === 'responded' ? 'responded' : 'pending'}">
+              ${status}
+            </span>
+          </div>
+        </div>
+        <div class="admin-item-actions">
+          <button class="btn btn-small btn-outline" onclick="adminChangeInquiryStatus('${inq.id}', '${toggleStatus}')">
+            Mark as ${toggleStatus.charAt(0).toUpperCase() + toggleStatus.slice(1)}
+          </button>
+          <button class="btn btn-small btn-danger" onclick="adminDeleteInquiry('${inq.id}')">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 // ==================== SELL PROPERTY FUNCTIONS ====================
@@ -1474,6 +1710,10 @@ function setupEventListeners() {
       document.body.style.overflow = 'auto';
       currentProperty = null;
     }
+        if (e.target === adminModal) {
+      adminModal.style.display = 'none';
+      document.body.style.overflow = 'auto';
+    }
     if (e.target === inquiryModal) {
       inquiryModal.style.display = 'none';
     }
@@ -1511,6 +1751,93 @@ function setupEventListeners() {
   });
 }
 
+// ==================== ADMIN ACTIONS ====================
+window.adminChangePropertyStatus = async function(propertyId, newStatus) {
+  if (!currentUser || currentUser.email !== ADMIN_EMAIL) {
+    showToast('Not authorized', 'error');
+    return;
+  }
+
+  try {
+    await updateDoc(doc(db, 'properties', propertyId), {
+      status: newStatus,
+      updatedAt: serverTimestamp()
+    });
+
+    showToast('Property status updated');
+    await loadProperties();
+    await loadAdminData();
+    loadAdminOverviewTab();
+    loadAdminPropertiesTab();
+  } catch (error) {
+    console.error('Error updating property status:', error);
+    showToast('Error updating property status', 'error');
+  }
+};
+
+window.adminDeleteProperty = async function(propertyId) {
+  if (!currentUser || currentUser.email !== ADMIN_EMAIL) {
+    showToast('Not authorized', 'error');
+    return;
+  }
+
+  if (!confirm('Are you sure you want to permanently delete this property?')) return;
+
+  try {
+    await deleteDoc(doc(db, 'properties', propertyId));
+    showToast('Property deleted');
+    await loadProperties();
+    await loadAdminData();
+    loadAdminOverviewTab();
+    loadAdminPropertiesTab();
+  } catch (error) {
+    console.error('Error deleting property:', error);
+    showToast('Error deleting property', 'error');
+  }
+};
+
+window.adminChangeInquiryStatus = async function(inquiryId, newStatus) {
+  if (!currentUser || currentUser.email !== ADMIN_EMAIL) {
+    showToast('Not authorized', 'error');
+    return;
+  }
+
+  try {
+    await updateDoc(doc(db, 'inquiries', inquiryId), {
+      status: newStatus,
+      updatedAt: serverTimestamp()
+    });
+
+    showToast('Inquiry status updated');
+    await loadAdminData();
+    loadAdminInquiriesTab();
+    loadAdminOverviewTab();
+  } catch (error) {
+    console.error('Error updating inquiry status:', error);
+    showToast('Error updating inquiry status', 'error');
+  }
+};
+
+window.adminDeleteInquiry = async function(inquiryId) {
+  if (!currentUser || currentUser.email !== ADMIN_EMAIL) {
+    showToast('Not authorized', 'error');
+    return;
+  }
+
+  if (!confirm('Are you sure you want to delete this inquiry?')) return;
+
+  try {
+    await deleteDoc(doc(db, 'inquiries', inquiryId));
+    showToast('Inquiry deleted');
+    await loadAdminData();
+    loadAdminInquiriesTab();
+    loadAdminOverviewTab();
+  } catch (error) {
+    console.error('Error deleting inquiry:', error);
+    showToast('Error deleting inquiry', 'error');
+  }
+};
+
 // ==================== INITIALIZE APP ====================
 document.addEventListener('DOMContentLoaded', () => {
   setupAuthModal();
@@ -1521,7 +1848,10 @@ document.addEventListener('DOMContentLoaded', () => {
   setupCalculators();
   setupEventListeners();
   loadProperties();
+  setupAdminPanel();
 });
+
+
 
 // Make loadProperties global for retry button
 window.loadProperties = loadProperties;
